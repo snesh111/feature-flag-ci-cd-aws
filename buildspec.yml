@@ -6,13 +6,13 @@ phases:
       - echo logging into aws ECR
       - aws --version
       - $(aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com)
-  build :
+  build:
     commands:
       - echo build started on `date`
       - docker build -t feature-toggle-app .
       - docker tag feature-toggle-app:latest $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/feature-toggle-app:latest
 
-  post build :
+  post_build:
     commands:
       - echo pusing the docker image
       - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/feature-toggle-app:latest 

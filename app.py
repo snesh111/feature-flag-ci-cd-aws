@@ -11,7 +11,7 @@ FEATURE_FLAG = os.getenv("FEATURE_FLAG", "false").lower()
 def home():
     if FEATURE_FLAG == "true":
         feature_status = "ON"
-        message = "🎉 New Feature Enabled!"
+        message = "New Feature Enabled!"
     else:
         feature_status = "OFF"
         message = "New Feature is Disabled"

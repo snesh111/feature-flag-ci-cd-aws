@@ -1,15 +1,37 @@
 from flask import Flask
 import os
+import boto3
+from botocore.exceptions import ClientError, NoCredentialsError
 
 app = Flask(__name__)
 
-# Read values from environment variables
 APP_VERSION = os.getenv("APP_VERSION", "1.0")
-FEATURE_FLAG = os.getenv("FEATURE_FLAG", "false").lower()
+
+FEATURE_FLAG_PARAM = os.getenv(
+    "FEATURE_FLAG_PARAM",
+    "/feature-toggle/new-feature"
+)
+
+def get_feature_flag():
+    """
+    Fetch feature flag value from AWS SSM Parameter Store.
+    Returns 'true' or 'false'
+    """
+    try:
+        ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "ap-south-1"))
+        response = ssm.get_parameter(
+            Name=FEATURE_FLAG_PARAM,
+            WithDecryption=False
+        )
+        return response["Parameter"]["Value"].lower()
+    except (ClientError, NoCredentialsError):
+        return "false"
 
 @app.route("/")
 def home():
-    if FEATURE_FLAG == "true":
+    feature_flag = get_feature_flag()
+
+    if feature_flag == "true":
         feature_status = "ON"
         message = "New Feature Enabled!"
     else:

@@ -13,20 +13,22 @@ FEATURE_FLAG_PARAM = os.getenv(
 )
 
 def get_feature_flag():
-    """
-    Fetch feature flag value from AWS SSM Parameter Store.
-    Returns 'true' or 'false'
-    """
     try:
-        ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "ap-south-1"))
+        ssm = boto3.client(
+            "ssm",
+            region_name=os.getenv("AWS_REGION", "ap-south-1")
+        )
+
         response = ssm.get_parameter(
             Name=FEATURE_FLAG_PARAM,
             WithDecryption=False
         )
-        return response["Parameter"]["Value"].lower()
-    except (ClientError, NoCredentialsError):
-        return "false"
 
+        return response["Parameter"]["Value"].lower()
+
+    except Exception:
+        return "false"
+  
 @app.route("/")
 def home():
     feature_flag = get_feature_flag()

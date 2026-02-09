@@ -1,71 +1,45 @@
-from flask import Flask, Response
+from flask import Flask, Response, jsonify
 import os
-import boto3
-from botocore.exceptions import ClientError, NoCredentialsError
 
 app = Flask(__name__)
 
-APP_VERSION = os.getenv("APP_VERSION", "1.0")
-
-FEATURE_FLAG_PARAM = os.getenv(
-    "FEATURE_FLAG_PARAM",
-    "/feature-flags/new_ui_enabled"
-)
-
-AWS_REGION = os.getenv("AWS_REGION", "ap-south-1")
-
-
-def get_feature_flag():
-    try:
-        ssm = boto3.client("ssm", region_name=AWS_REGION)
-        response = ssm.get_parameter(
-            Name=FEATURE_FLAG_PARAM,
-            WithDecryption=False
-        )
-        return response["Parameter"]["Value"].lower()
-    except (ClientError, NoCredentialsError) as e:
-        print(f"SSM error: {e}")
-        return "false"
+APP_VERSION = os.getenv("APP_VERSION", "unknown")
+FEATURE_FLAG = os.getenv("FEATURE_X", "false").lower()
 
 
 @app.route("/")
 def home():
-    feature_flag = get_feature_flag()
+    status = "ON" if FEATURE_FLAG == "true" else "OFF"
+    mode = "NEW FEATURE" if FEATURE_FLAG == "true" else "OLD FEATURE"
+    description = (
+        "New functionality is active and controlled using feature flags."
+        if FEATURE_FLAG == "true"
+        else "Stable legacy functionality is running."
+    )
 
-    if feature_flag == "true":
-        text = (
-            "Feature Toggle Application\n"
-            "--------------------------\n"
-            f"App Version   : {APP_VERSION}\n"
-            "Feature Flag  : ON\n\n"
-            "NEW FEATURE\n"
-            "-----------\n"
-            "New functionality is active.\n"
-            "Behavior is controlled using AWS SSM Parameter Store.\n"
-            "No redeployment is required to enable this feature.\n"
-        )
-    else:
-        text = (
-            "Feature Toggle Application\n"
-            "--------------------------\n"
-            f"App Version   : {APP_VERSION}\n"
-            "Feature Flag  : OFF\n\n"
-            "OLD FEATURE\n"
-            "-----------\n"
-            "Legacy functionality is running.\n"
-            "This is the stable default behavior.\n"
-            "The feature can be enabled at runtime.\n"
-        )
+    text = (
+        "Feature Toggle Application\n"
+        "==========================\n\n"
+        f"App Version   : {APP_VERSION}\n"
+        f"Feature Flag  : {status}\n"
+        "Deployment    : ECS Blue/Green (Zero Downtime)\n"
+        "Config Source : AWS SSM Parameter Store\n\n"
+        f"{mode}\n"
+        "------------\n"
+        f"{description}\n"
+    )
 
     return Response(text, mimetype="text/plain")
 
 
 @app.route("/status")
 def status():
-    return {
-        "version": APP_VERSION,
-        "feature_flag": get_feature_flag()
-    }
+    return jsonify({
+        "app_version": APP_VERSION,
+        "feature_flag": FEATURE_FLAG,
+        "deployment": "blue-green",
+        "config_source": "aws-ssm"
+    })
 
 
 @app.route("/health")
@@ -75,3 +49,4 @@ def health():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000)
+

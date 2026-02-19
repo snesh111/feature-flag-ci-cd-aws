@@ -8,3 +8,4 @@ Resources:
           ContainerName: feature-toggle-container
           ContainerPort: 5000
 
+

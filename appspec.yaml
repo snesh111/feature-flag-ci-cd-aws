@@ -1,0 +1,10 @@
+version: 1.0
+Resources:
+  - TargetService:
+      Type: AWS::ECS::Service
+      Properties:
+        TaskDefinition: feature-toggle-task:14
+        LoadBalancerInfo:
+          ContainerName: feature-toggle-container
+          ContainerPort: 5000
+

@@ -44,7 +44,7 @@ def status():
 
 @app.route("/health")
 def health():
-    return "OK", 200
+    return "OK",200
 
 
 if __name__ == "__main__":
